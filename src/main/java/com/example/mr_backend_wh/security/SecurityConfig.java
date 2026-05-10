@@ -45,7 +45,7 @@ public class SecurityConfig {
                       String uri = request.getRequestURI();
                       if (uri == null) return false;
                       // Ignorar CSRF para endpoints de auth y para la API de guitarra (POST desde cliente/API)
-                      return uri.contains("/auth") || uri.startsWith("/guitarra");
+                      return uri.contains("/auth") || uri.startsWith("/guitarra") || uri.startsWith("/direccion");
                     })
             )
             .authorizeHttpRequests(req ->
@@ -54,19 +54,7 @@ public class SecurityConfig {
                             // permitir explícitamente login y endpoints OAuth para evitar que /login quede protegida
                             .requestMatchers("/login", "/oauth2/**", "/oauth2/authorization/**", "/registro").permitAll()
                             .requestMatchers("/guitarra/**").permitAll()
-                            .requestMatchers(POST, "/guitarra/**").permitAll()
-                            .requestMatchers(GET, "/wordle/**").permitAll()
-                            .requestMatchers(POST, "/wordle/**").permitAll()
-                            .requestMatchers(GET, "/usuarios/banear").hasAnyAuthority("true")
-                            .requestMatchers(GET, "/publicacion/eliminarPublicacion").permitAll()
-                            .requestMatchers(GET, "/publicacion/eliminarComentario").permitAll()
-                            .requestMatchers(GET, "/publicacion/**").permitAll()
-                            .requestMatchers(GET, "/chat/**").permitAll()
-                            .requestMatchers(GET, "/perfil/**").permitAll()
-                            .requestMatchers(GET, "/comentario/**").permitAll()
-                            .requestMatchers("/mensajes/**").permitAll()
-                            .requestMatchers("/chat/**").permitAll()
-                            .requestMatchers(GET,"/publicacion/buscar").permitAll()
+                            .requestMatchers("/direccion/**").permitAll()
                             .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint))

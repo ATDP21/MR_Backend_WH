@@ -18,6 +18,7 @@ import java.time.OffsetDateTime;
 public class Direccion {
     @Id
     @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -49,8 +50,9 @@ public class Direccion {
     @Column(name = "documento_id", length = 30)
     private String documentoId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_direccion", nullable = false, length = 20)
-    private String tipoDireccion;
+    private TipoDireccion tipoDireccion;
 
     @ColumnDefault("now()")
     @Column(name = "fechacreacion")
