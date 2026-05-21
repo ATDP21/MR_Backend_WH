@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 @EqualsAndHashCode
 public class StockPedido {
     @Id
-    @ColumnDefault("nextval('manuel_romero.stock_pedido_id_seq')")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 

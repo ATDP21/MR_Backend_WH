@@ -18,7 +18,6 @@ public class GuitarraService {
 
     public Guitarra crearGuitarra(GuitarraDTO guitarraDTO) {
         Guitarra guitarra = new Guitarra();
-        guitarra.setNumserie(guitarraDTO.getNumserie());
         guitarra.setEstado(guitarraDTO.getEstado());
         guitarra.setPrecio(guitarraDTO.getPrecio());
         guitarra.setTipomadera(guitarraDTO.getTipoMadera());
@@ -33,7 +32,7 @@ public class GuitarraService {
         return guitarraRepository.findGuitarraByEstado("Stock");
     }
 
-    public List<Guitarra> obtenerGuitarrasPorIds(List<Long> ids) {
+    public List<Guitarra> obtenerGuitarrasPorIds(List<Integer> ids) {
         return guitarraRepository.findAllById(ids);
     }
 }

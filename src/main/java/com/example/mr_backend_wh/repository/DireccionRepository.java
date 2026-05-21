@@ -9,4 +9,6 @@ import java.util.Optional;
 
 public interface DireccionRepository extends JpaRepository<Direccion, Integer> {
     Optional<List<Direccion>> findAllByUsuarioid(Usuario usuario);
+
+    Direccion getDireccionById(Integer id);
 }

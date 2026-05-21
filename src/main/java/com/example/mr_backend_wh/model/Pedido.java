@@ -1,24 +1,17 @@
 package com.example.mr_backend_wh.model;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.AttributeOverrides;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "pedido", schema = "manuel_romero")
@@ -29,7 +22,7 @@ import java.time.OffsetDateTime;
 @EqualsAndHashCode
 public class Pedido {
     @Id
-    @ColumnDefault("nextval('manuel_romero.pedidos_id_seq')")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -37,7 +30,7 @@ public class Pedido {
     @JoinColumn(name = "usuarioid", nullable = false)
     private Usuario usuarioid;
 
-    @ColumnDefault("now()")
+    @CreationTimestamp
     @Column(name = "fecha")
     private OffsetDateTime fecha;
 
@@ -62,7 +55,7 @@ public class Pedido {
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "nombreDe stinatario", column = @Column(name = "fact_nombre_destinatario", length = 150)),
+            @AttributeOverride(name = "nombreDestinatario", column = @Column(name = "fact_nombre_destinatario", length = 150)),
             @AttributeOverride(name = "direccionCalle", column = @Column(name = "fact_direccion_calle", length = 200)),
             @AttributeOverride(name = "codigoPostal", column = @Column(name = "fact_codigo_postal", length = 20)),
             @AttributeOverride(name = "ciudad", column = @Column(name = "fact_ciudad", length = 100)),
@@ -72,4 +65,7 @@ public class Pedido {
             @AttributeOverride(name = "documentoId", column = @Column(name = "fact_documento_id", length = 30))
     })
     private DireccionSnapshot direccionFacturacion;
+
+    @OneToMany(mappedBy = "pedidoid")
+    private List<StockPedido> listaProductos;
 }

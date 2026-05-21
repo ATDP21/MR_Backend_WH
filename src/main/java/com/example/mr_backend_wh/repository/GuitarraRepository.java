@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface GuitarraRepository extends JpaRepository<Guitarra, Long> {
+public interface GuitarraRepository extends JpaRepository<Guitarra, Integer> {
 
 
     Optional<List<Guitarra>> findGuitarraByEstado(String estado);
