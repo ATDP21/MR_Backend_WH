@@ -32,7 +32,7 @@ public class StockPedido {
 
     @ColumnDefault("1")
     @Column(name = "cantidad", nullable = false)
-    private Integer cantidad;
+    private Long cantidad;
 
     @Column(name = "precio_unidad", nullable = false, precision = 10, scale = 2)
     private BigDecimal precioUnidad;

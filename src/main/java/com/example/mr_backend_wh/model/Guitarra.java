@@ -20,6 +20,9 @@ public class Guitarra {
     @Column(name = "id", nullable = false)
     private Integer id;
 
+    @Column(name = "nombre", length = 100)
+    private String nombre;
+
     @Column(name = "numserie", nullable = false, length = 50)
     private String numserie;
 

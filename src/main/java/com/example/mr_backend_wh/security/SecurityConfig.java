@@ -45,7 +45,7 @@ public class SecurityConfig {
                       String uri = request.getRequestURI();
                       if (uri == null) return false;
                       // Ignorar CSRF para endpoints de auth y para la API de guitarra (POST desde cliente/API)
-                      return uri.contains("/auth") || uri.startsWith("/guitarra") || uri.startsWith("/direccion") || uri.startsWith("/pedido");
+                      return uri.contains("/auth") || uri.startsWith("/guitarra") || uri.startsWith("/direccion") || uri.startsWith("/pedido") || uri.startsWith("/api/checkout");
                     })
             )
             .authorizeHttpRequests(req ->
@@ -56,6 +56,8 @@ public class SecurityConfig {
                             .requestMatchers("/guitarra/**").permitAll()
                             .requestMatchers("/direccion/**").permitAll()
                             .requestMatchers("/pedido/**").permitAll()
+                            .requestMatchers("/api/checkout/**").permitAll()
+                            .requestMatchers("/cart").permitAll()
                             .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint))

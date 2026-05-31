@@ -84,7 +84,7 @@ public class PedidoService {
                     .orElseThrow(() -> new RuntimeException("❌ Guitarra no encontrada: " + linea.getGuitarraid()));
 
             BigDecimal precioUnidad = guitarra.getPrecio();
-            int cantidad = (linea.getCantidad() == null ? 0 : linea.getCantidad());
+            Long cantidad = (linea.getCantidad() == null ? 0L : linea.getCantidad());
 
 
             StockPedido sp = new StockPedido();

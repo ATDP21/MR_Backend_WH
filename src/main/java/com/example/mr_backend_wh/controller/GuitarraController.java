@@ -31,9 +31,9 @@ public class GuitarraController {
     public List<Guitarra> verCarrito(@RequestBody List<Integer> ids) {
         return guitarraService.obtenerGuitarrasPorIds(ids);
     }
-    @GetMapping("/ver/{numserie}")
-    public Optional<Guitarra> verGuitarra(@PathVariable String numserie){
-        return guitarraService.obtenerGuitarraPorNumserie(numserie);
+    @GetMapping("/ver/{id}")
+    public Optional<Guitarra> verGuitarra(@PathVariable Integer id){
+        return guitarraService.obtenerGuitarraPorId(id);
     }
 
 }

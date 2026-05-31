@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 public class StockPedidoCrearDTO {
     private Integer guitarraid;
-    private Integer cantidad;
+    private Long cantidad;
 }

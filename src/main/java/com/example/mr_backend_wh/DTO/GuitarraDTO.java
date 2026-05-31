@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 @Data
 public class GuitarraDTO {
     private Integer id;
+    private String nombre;
     private String estado;
     private BigDecimal precio;
     private String tipoMadera;

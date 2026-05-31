@@ -25,8 +25,8 @@ public class GuitarraService {
 
         return guitarraRepository.save(guitarra);
     }
-    public Optional<Guitarra> obtenerGuitarraPorNumserie(String numserie) {
-        return guitarraRepository.findByNumserie(numserie);
+    public Optional<Guitarra> obtenerGuitarraPorId(Integer id) {
+        return guitarraRepository.findById(id);
     }
     public Optional<List<Guitarra>> obtenerGuitarrasEnStock() {
         return guitarraRepository.findGuitarraByEstado("Stock");
