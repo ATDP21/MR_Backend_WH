@@ -9,12 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @AllArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class PedidoService {
 
     private final UsuarioRepository usuarioRepository;
@@ -29,49 +29,79 @@ public class PedidoService {
     private StockPedidoRepository stockPedidoRepository;
 
     @Transactional
-    public PedidoDTO crearPedido( PedidoCrearRequestDTO dto) {
-
+    public PedidoDTO crearPedido(PedidoCrearRequestDTO dto) {
         UsuarioSecureDTO usuarioSecure = usuarioService.obtenerPerfilUsuarioLoggeado();
 
         Usuario usuario = usuarioRepository.findTopByNomusuario(usuarioSecure.getNomusuario())
                 .orElseThrow(() -> new RuntimeException("❌ Usuario no encontrado"));
+        return crearPedidoInterno(usuario, dto, "PENDIENTE", null);
+    }
+
+    @Transactional
+    public PedidoDTO crearPedidoConfirmadoDesdePago(String email,
+                                                    Integer direccionEntregaId,
+                                                    Integer direccionFacturacionId,
+                                                    List<StockPedidoCrearDTO> lineas) {
+        return crearPedidoConfirmadoDesdePago(email, direccionEntregaId, direccionFacturacionId, lineas, null);
+    }
+
+    @Transactional
+    public PedidoDTO crearPedidoConfirmadoDesdePago(String email,
+                                                    Integer direccionEntregaId,
+                                                    Integer direccionFacturacionId,
+                                                    List<StockPedidoCrearDTO> lineas,
+                                                    String stripeSessionId) {
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Email inválido para crear pedido confirmado");
+        }
+
+        // Validar idempotencia: si ya existe un pedido con este stripeSessionId, devolverlo
+        if (stripeSessionId != null && !stripeSessionId.isBlank()) {
+            var pedidoExistente = pedidoRepository.findByStripeSessionId(stripeSessionId);
+            if (pedidoExistente.isPresent()) {
+                log.warn("crearPedidoConfirmadoDesdePago: pedido ya existe para stripeSessionId={}", stripeSessionId);
+                return toPedidoDTO(pedidoExistente.get());
+            }
+        }
+
+        Usuario usuario = usuarioRepository.findTopByEmail(email)
+                .orElseThrow(() -> new RuntimeException("❌ Usuario no encontrado por email: " + email));
+
+        PedidoCrearRequestDTO dto = new PedidoCrearRequestDTO();
+        dto.setDireccionEntregaId(direccionEntregaId);
+        dto.setDireccionFacturacionId(direccionFacturacionId);
+        dto.setStockPedidos(lineas);
+
+        return crearPedidoInterno(usuario, dto, "CONFIRMADO", stripeSessionId);
+    }
+
+    private PedidoDTO crearPedidoInterno(Usuario usuario, PedidoCrearRequestDTO dto, String estadoPedido) {
+        return crearPedidoInterno(usuario, dto, estadoPedido, null);
+    }
+
+    private PedidoDTO crearPedidoInterno(Usuario usuario, PedidoCrearRequestDTO dto, String estadoPedido, String stripeSessionId) {
+        if (dto == null || dto.getStockPedidos() == null || dto.getStockPedidos().isEmpty()) {
+            throw new RuntimeException("El pedido debe incluir al menos una línea de producto");
+        }
+        if (dto.getDireccionEntregaId() == null || dto.getDireccionFacturacionId() == null) {
+            throw new RuntimeException("Las direcciones de entrega y facturación son obligatorias");
+        }
 
         Pedido pedido = new Pedido();
 
         pedido.setUsuarioid(usuario);
 
-//        DireccionSnapshot direccionEntrega = new DireccionSnapshot();
-//        DireccionDTO direccionDTOEntrega = dto.getDireccionEntrega();
-//        direccionEntrega.setNombreDestinatario(direccionDTOEntrega.getNombreDestinatario());
-//        direccionEntrega.setDireccionCalle(direccionDTOEntrega.getDireccionCalle());
-//        direccionEntrega.setCodigoPostal(direccionDTOEntrega.getCodigoPostal());
-//        direccionEntrega.setCiudad(direccionDTOEntrega.getCiudad());
-//        direccionEntrega.setProvincia(direccionDTOEntrega.getProvincia());
-//        direccionEntrega.setPais(direccionDTOEntrega.getPais());
-//        direccionEntrega.setTelefono(direccionDTOEntrega.getTelefono());
-//        direccionEntrega.setDocumentoId(direccionDTOEntrega.getDocumentoId());
+        Direccion direccionEntrega = direccionRepository.getDireccionById(dto.getDireccionEntregaId());
+        pedido.setDireccionEntrega(DireccionSnapshot.from(direccionEntrega));
 
-        Direccion direccionEntregaId = direccionRepository.getDireccionById(dto.getDireccionEntregaId());
+        Direccion direccionFacturacion = direccionRepository.getDireccionById(dto.getDireccionFacturacionId());
+        pedido.setDireccionFacturacion(DireccionSnapshot.from(direccionFacturacion));
 
-        pedido.setDireccionEntrega(DireccionSnapshot.from(direccionEntregaId));
-
-//        DireccionSnapshot direccionFacturacion = new DireccionSnapshot();
-//        DireccionDTO direccionDTOFacturacion = dto.getDireccionFacturacion();
-//        direccionFacturacion.setNombreDestinatario(direccionDTOFacturacion.getNombreDestinatario());
-//        direccionFacturacion.setDireccionCalle(direccionDTOFacturacion.getDireccionCalle());
-//        direccionFacturacion.setCodigoPostal(direccionDTOFacturacion.getCodigoPostal());
-//        direccionFacturacion.setCiudad(direccionDTOFacturacion.getCiudad());
-//        direccionFacturacion.setProvincia(direccionDTOFacturacion.getProvincia());
-//        direccionFacturacion.setPais(direccionDTOFacturacion.getPais());
-//        direccionFacturacion.setTelefono(direccionDTOFacturacion.getTelefono());
-//        direccionFacturacion.setDocumentoId(direccionDTOFacturacion.getDocumentoId());
-
-        Direccion direccionFacturacionId = direccionRepository.getDireccionById(dto.getDireccionFacturacionId());
-
-        pedido.setDireccionFacturacion(DireccionSnapshot.from(direccionFacturacionId));
-
-        pedido.setEstado("Pendiente");
+        pedido.setEstado(estadoPedido);
         pedido.setTotal(BigDecimal.ZERO);
+        if (stripeSessionId != null && !stripeSessionId.isBlank()) {
+            pedido.setStripeSessionId(stripeSessionId);
+        }
 
         Pedido guardado = pedidoRepository.save(pedido);
 
@@ -84,7 +114,10 @@ public class PedidoService {
                     .orElseThrow(() -> new RuntimeException("❌ Guitarra no encontrada: " + linea.getGuitarraid()));
 
             BigDecimal precioUnidad = guitarra.getPrecio();
-            Long cantidad = (linea.getCantidad() == null ? 0L : linea.getCantidad());
+            long cantidad = (linea.getCantidad() == null ? 0L : linea.getCantidad());
+            if (cantidad <= 0) {
+                throw new RuntimeException("❌ Cantidad inválida para guitarra " + linea.getGuitarraid());
+            }
 
 
             StockPedido sp = new StockPedido();
@@ -92,7 +125,7 @@ public class PedidoService {
             sp.setPedidoid(guardado);              // <- clave (FK se rellena al persistir)
 
             sp.setGuitarraid(guitarra);
-            sp.setCantidad(cantidad);
+            sp.setCantidad(Long.valueOf(cantidad));
             sp.setPrecioUnidad(precioUnidad);
 
             total = total.add(precioUnidad.multiply(BigDecimal.valueOf(cantidad)));
@@ -103,35 +136,77 @@ public class PedidoService {
         pedido.setListaProductos(listaProductos);
 
         Pedido actualizado = pedidoRepository.save(pedido);
-
-
         return toPedidoDTO(actualizado);
-
     }
+
     private PedidoDTO toPedidoDTO(Pedido pedido) {
         PedidoDTO dto = new PedidoDTO();
         dto.setId(pedido.getId());
         dto.setFecha(pedido.getFecha());
         dto.setEstado(pedido.getEstado());
         dto.setTotal(pedido.getTotal());
+        dto.setStripeSessionId(pedido.getStripeSessionId());
 
         UsuarioSecureDTO u = new UsuarioSecureDTO();
         Usuario usuPedido = pedido.getUsuarioid();
         u.setNomusuario(usuPedido.getNomusuario());
         u.setEmail(usuPedido.getEmail());
-        u.setNombreCompleto(u.getNombreCompleto());
+        u.setNombreCompleto(usuPedido.getNomcompleto());
         u.setEsAdmin(false);
 
         dto.setUsuario(u);
 
+        // Mapear DireccionSnapshot -> DireccionDTO (si existe)
+        if (pedido.getDireccionEntrega() != null) {
+            DireccionDTO de = new DireccionDTO();
+            de.setId(null);
+            de.setNombreDestinatario(pedido.getDireccionEntrega().getNombreDestinatario());
+            de.setDireccionCalle(pedido.getDireccionEntrega().getDireccionCalle());
+            de.setCodigoPostal(pedido.getDireccionEntrega().getCodigoPostal());
+            de.setCiudad(pedido.getDireccionEntrega().getCiudad());
+            de.setProvincia(pedido.getDireccionEntrega().getProvincia());
+            de.setPais(pedido.getDireccionEntrega().getPais());
+            de.setTelefono(pedido.getDireccionEntrega().getTelefono());
+            de.setDocumentoId(pedido.getDireccionEntrega().getDocumentoId());
+            dto.setDireccionEntrega(de);
+        }
 
+        if (pedido.getDireccionFacturacion() != null) {
+            DireccionDTO df = new DireccionDTO();
+            df.setId(null);
+            df.setNombreDestinatario(pedido.getDireccionFacturacion().getNombreDestinatario());
+            df.setDireccionCalle(pedido.getDireccionFacturacion().getDireccionCalle());
+            df.setCodigoPostal(pedido.getDireccionFacturacion().getCodigoPostal());
+            df.setCiudad(pedido.getDireccionFacturacion().getCiudad());
+            df.setProvincia(pedido.getDireccionFacturacion().getProvincia());
+            df.setPais(pedido.getDireccionFacturacion().getPais());
+            df.setTelefono(pedido.getDireccionFacturacion().getTelefono());
+            df.setDocumentoId(pedido.getDireccionFacturacion().getDocumentoId());
+            dto.setDireccionFacturacion(df);
+        }
 
-        // Direcciones: si guardas snapshots, aquí necesitarás mapear snapshot -> DireccionDTO
-        // dto.setDireccionEntrega(...)
-        // dto.setDireccionFacturacion(...)
-
-        // Líneas: si tu PedidoDTO las necesita, mapea pedido.getListaProductos() -> List<StockPedidoDTO>
-        // dto.setStockPedidos(...)
+        // Mapear líneas de pedido
+        if (pedido.getListaProductos() != null && !pedido.getListaProductos().isEmpty()) {
+            List<StockPedidoDTO> lista = new ArrayList<>();
+            for (StockPedido sp : pedido.getListaProductos()) {
+                StockPedidoDTO spdto = new StockPedidoDTO();
+                if (sp.getGuitarraid() != null) {
+                    Guitarra g = sp.getGuitarraid();
+                    GuitarraDTO gdto = new GuitarraDTO();
+                    gdto.setId(g.getId());
+                    gdto.setNombre(g.getNombre());
+                    gdto.setEstado(g.getEstado());
+                    gdto.setPrecio(g.getPrecio());
+                    gdto.setTipoMadera(g.getTipomadera());
+                    gdto.setTipo(g.getTipo());
+                    spdto.setGuitarraid(gdto);
+                }
+                spdto.setCantidad(sp.getCantidad() == null ? 0 : sp.getCantidad().intValue());
+                spdto.setPrecioUnidad(sp.getPrecioUnidad());
+                lista.add(spdto);
+            }
+            dto.setStockPedidos(lista);
+        }
 
         return dto;
     }

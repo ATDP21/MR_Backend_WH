@@ -37,7 +37,7 @@ public class CsrfFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         String method = request.getMethod();
 
-        if (uri != null && uri.contains("/auth")) {
+        if (uri != null && (uri.contains("/auth") || uri.startsWith("/api/webhook"))) {
             filterChain.doFilter(request, response);
             return;
         }

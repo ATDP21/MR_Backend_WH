@@ -16,4 +16,5 @@ public class PedidoDTO {
     private DireccionDTO direccionEntrega;
     private DireccionDTO direccionFacturacion;
     private List<StockPedidoDTO> stockPedidos;
+    private String stripeSessionId;
 }
