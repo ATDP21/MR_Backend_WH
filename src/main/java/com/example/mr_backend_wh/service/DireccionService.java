@@ -1,6 +1,7 @@
 // src/main/java/com/example/mr_backend_wh/service/DireccionService.java
 package com.example.mr_backend_wh.service;
 
+import com.example.mr_backend_wh.DTO.ActualizarDireccionDTO;
 import com.example.mr_backend_wh.DTO.CrearDireccionDTO;
 import com.example.mr_backend_wh.DTO.DireccionDTO;
 import com.example.mr_backend_wh.DTO.UsuarioSecureDTO;
@@ -57,6 +58,70 @@ public class DireccionService {
         List<Direccion> direcciones = direccionRepository.findAllByUsuarioid(usuario).orElse(List.of());
 
         return direcciones.stream().map(this::toDTO).toList();
+    }
+
+    public DireccionDTO editarDireccionUsuarioLoggeado(Integer id, ActualizarDireccionDTO dto) {
+        UsuarioSecureDTO usuarioSecure = usuarioService.obtenerPerfilUsuarioLoggeado();
+
+        Usuario usuario = usuarioRepository.findTopByNomusuario(usuarioSecure.getNomusuario())
+                .orElseThrow(() -> new RuntimeException("❌ Usuario no encontrado"));
+
+        Direccion direccion = direccionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("❌ Dirección no encontrada"));
+
+        // Verificar que la dirección pertenece al usuario loggeado
+        if (!direccion.getUsuarioid().getId().equals(usuario.getId())) {
+            throw new RuntimeException("❌ No tienes permiso para editar esta dirección");
+        }
+
+        // Actualizar campos
+        if (dto.getNombreDestinatario() != null && !dto.getNombreDestinatario().isBlank()) {
+            direccion.setNombreDestinatario(dto.getNombreDestinatario());
+        }
+        if (dto.getDireccionCalle() != null && !dto.getDireccionCalle().isBlank()) {
+            direccion.setDireccionCalle(dto.getDireccionCalle());
+        }
+        if (dto.getCodigoPostal() != null && !dto.getCodigoPostal().isBlank()) {
+            direccion.setCodigoPostal(dto.getCodigoPostal());
+        }
+        if (dto.getCiudad() != null && !dto.getCiudad().isBlank()) {
+            direccion.setCiudad(dto.getCiudad());
+        }
+        if (dto.getProvincia() != null && !dto.getProvincia().isBlank()) {
+            direccion.setProvincia(dto.getProvincia());
+        }
+        if (dto.getPais() != null && !dto.getPais().isBlank()) {
+            direccion.setPais(dto.getPais());
+        }
+        if (dto.getTelefono() != null && !dto.getTelefono().isBlank()) {
+            direccion.setTelefono(dto.getTelefono());
+        }
+        if (dto.getDocumentoId() != null && !dto.getDocumentoId().isBlank()) {
+            direccion.setDocumentoId(dto.getDocumentoId());
+        }
+        if (dto.getTipoDireccion() != null) {
+            direccion.setTipoDireccion(dto.getTipoDireccion());
+        }
+
+        Direccion actualizada = direccionRepository.save(direccion);
+        return toDTO(actualizada);
+    }
+
+    public void eliminarDireccionUsuarioLoggeado(Integer id) {
+        UsuarioSecureDTO usuarioSecure = usuarioService.obtenerPerfilUsuarioLoggeado();
+
+        Usuario usuario = usuarioRepository.findTopByNomusuario(usuarioSecure.getNomusuario())
+                .orElseThrow(() -> new RuntimeException("❌ Usuario no encontrado"));
+
+        Direccion direccion = direccionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("❌ Dirección no encontrada"));
+
+        // Verificar que la dirección pertenece al usuario loggeado
+        if (!direccion.getUsuarioid().getId().equals(usuario.getId())) {
+            throw new RuntimeException("❌ No tienes permiso para eliminar esta dirección");
+        }
+
+        direccionRepository.delete(direccion);
     }
 
     private DireccionDTO toDTO(Direccion d) {

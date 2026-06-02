@@ -139,6 +139,42 @@ public class PedidoService {
         return toPedidoDTO(actualizado);
     }
 
+    @Transactional
+    public List<PedidoDTO> obtenerPedidosUsuarioLoggeado() {
+        // Obtener datos del usuario autenticado
+        UsuarioSecureDTO usuarioSecure = usuarioService.obtenerPerfilUsuarioLoggeado();
+
+        Usuario usuario = usuarioRepository.findTopByNomusuario(usuarioSecure.getNomusuario())
+                .orElseThrow(() -> new RuntimeException("❌ Usuario no encontrado"));
+
+        // Usar búsqueda por id para evitar problemas de resolución
+        List<Pedido> pedidos = pedidoRepository.findAllByUsuarioidIdOrderByFechaDesc(usuario.getId());
+
+        List<PedidoDTO> resultado = new ArrayList<>();
+        if (pedidos != null) {
+            for (Pedido p : pedidos) {
+                resultado.add(toPedidoDTO(p));
+            }
+        }
+        return resultado;
+    }
+
+    @Transactional
+    public PedidoDTO obtenerPedidoPorIdParaUsuarioLoggeado(Integer pedidoId) {
+        UsuarioSecureDTO usuarioSecure = usuarioService.obtenerPerfilUsuarioLoggeado();
+        Usuario usuario = usuarioRepository.findTopByNomusuario(usuarioSecure.getNomusuario())
+                .orElseThrow(() -> new RuntimeException("❌ Usuario no encontrado"));
+
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("❌ Pedido no encontrado"));
+
+        if (!pedido.getUsuarioid().getId().equals(usuario.getId())) {
+            throw new RuntimeException("Acceso denegado: el pedido no pertenece al usuario autenticado");
+        }
+
+        return toPedidoDTO(pedido);
+    }
+
     private PedidoDTO toPedidoDTO(Pedido pedido) {
         PedidoDTO dto = new PedidoDTO();
         dto.setId(pedido.getId());
