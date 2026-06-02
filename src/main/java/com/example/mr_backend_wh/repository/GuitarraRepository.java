@@ -13,5 +13,4 @@ public interface GuitarraRepository extends JpaRepository<Guitarra, Integer> {
 
     Optional<List<Guitarra>> findGuitarraByEstado(String estado);
 
-    Optional<Guitarra> findById(Integer number);
 }
