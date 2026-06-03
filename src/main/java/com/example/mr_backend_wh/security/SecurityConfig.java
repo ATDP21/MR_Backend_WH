@@ -53,7 +53,9 @@ public class SecurityConfig {
                             .requestMatchers(("/auth/**")).permitAll()
                             // permitir explícitamente login y endpoints OAuth para evitar que /login quede protegida
                             .requestMatchers("/login", "/oauth2/**", "/oauth2/authorization/**", "/registro").permitAll()
+                            .requestMatchers("/error").permitAll()
                             .requestMatchers("/guitarra/**").permitAll()
+                            .requestMatchers("/media/**").permitAll()
                             .requestMatchers("/direccion/**").permitAll()
                             .requestMatchers("/pedido/**").permitAll()
                             .requestMatchers("/api/checkout/**").permitAll()
