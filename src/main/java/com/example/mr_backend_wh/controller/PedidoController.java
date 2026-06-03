@@ -5,7 +5,7 @@ import com.example.mr_backend_wh.DTO.PedidoDTO;
 import com.example.mr_backend_wh.model.Pedido;
 import com.example.mr_backend_wh.service.PedidoService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +31,12 @@ public class PedidoController {
     @GetMapping("/mios")
     public List<PedidoDTO> misPedidos() {
         return pedidoService.obtenerPedidosUsuarioLoggeado();
+    }
+
+    @GetMapping("/todos")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public List<PedidoDTO> todosLosPedidos() {
+        return pedidoService.obtenerTodosLosPedidos();
     }
 
     @GetMapping("/{id}")

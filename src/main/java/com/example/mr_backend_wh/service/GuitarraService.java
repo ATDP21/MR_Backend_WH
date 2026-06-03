@@ -18,6 +18,7 @@ public class GuitarraService {
 
     public Guitarra crearGuitarra(GuitarraDTO guitarraDTO) {
         Guitarra guitarra = new Guitarra();
+        guitarra.setNumserie(guitarraDTO.getNumserie());
         guitarra.setEstado(guitarraDTO.getEstado());
         guitarra.setPrecio(guitarraDTO.getPrecio());
         guitarra.setTipomadera(guitarraDTO.getTipoMadera());

@@ -12,6 +12,8 @@ import java.util.Optional;
 public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
     Optional<Pedido> findByStripeSessionId(String stripeSessionId);
 
+    List<Pedido> findAllByOrderByFechaDesc();
+
     // Devuelve todos los pedidos de un usuario (ordenados por fecha descendente)
     List<Pedido> findAllByUsuarioidOrderByFechaDesc(Usuario usuario);
 

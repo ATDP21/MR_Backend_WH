@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @AllArgsConstructor
@@ -140,6 +141,29 @@ public class PedidoService {
     }
 
     @Transactional
+    public List<PedidoDTO> obtenerTodosLosPedidos() {
+        UsuarioSecureDTO usuarioSecure = usuarioService.obtenerPerfilUsuarioLoggeado();
+
+        Usuario usuario = usuarioRepository.findTopByNomusuario(usuarioSecure.getNomusuario())
+                .orElseThrow(() -> new RuntimeException("❌ Usuario no encontrado"));
+        if (Objects.equals(usuario.getRolid(), new Rol(2, "ADMIN"))) {
+            List<Pedido> pedidos = pedidoRepository.findAllByOrderByFechaDesc();
+            List<PedidoDTO> resultado = new ArrayList<>();
+            if (pedidos != null) {
+                for (Pedido p : pedidos) {
+                    resultado.add(toPedidoDTO(p));
+                }
+            }
+            return resultado;
+
+        } else {
+            List<PedidoDTO> resultado = new ArrayList<>();
+            return resultado;
+        }
+
+    }
+
+    @Transactional
     public List<PedidoDTO> obtenerPedidosUsuarioLoggeado() {
         // Obtener datos del usuario autenticado
         UsuarioSecureDTO usuarioSecure = usuarioService.obtenerPerfilUsuarioLoggeado();
@@ -168,7 +192,8 @@ public class PedidoService {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new RuntimeException("❌ Pedido no encontrado"));
 
-        if (!pedido.getUsuarioid().getId().equals(usuario.getId())) {
+        // Si es admin, puede ver cualquier pedido. Si no, solo el suyo.
+        if (!usuarioSecure.isEsAdmin() && !pedido.getUsuarioid().getId().equals(usuario.getId())) {
             throw new RuntimeException("Acceso denegado: el pedido no pertenece al usuario autenticado");
         }
 
@@ -230,6 +255,7 @@ public class PedidoService {
                     Guitarra g = sp.getGuitarraid();
                     GuitarraDTO gdto = new GuitarraDTO();
                     gdto.setId(g.getId());
+                    gdto.setNumserie(g.getNumserie());
                     gdto.setNombre(g.getNombre());
                     gdto.setEstado(g.getEstado());
                     gdto.setPrecio(g.getPrecio());
