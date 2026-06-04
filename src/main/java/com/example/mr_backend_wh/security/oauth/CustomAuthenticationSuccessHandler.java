@@ -4,6 +4,7 @@ import com.example.mr_backend_wh.model.Rol;
 import com.example.mr_backend_wh.model.Usuario;
 import com.example.mr_backend_wh.repository.RolRepository;
 import com.example.mr_backend_wh.repository.UsuarioRepository;
+import com.example.mr_backend_wh.security.CsrfTokenCookieUtil;
 import com.example.mr_backend_wh.security.JWTService;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -109,6 +110,7 @@ public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, token).httpOnly(true).secure(false).path("/").maxAge(3600).sameSite("Lax").build();
     response.addHeader("Set-Cookie", cookie.toString());
+    response.addHeader("Set-Cookie", CsrfTokenCookieUtil.buildXsrfCookie(CsrfTokenCookieUtil.generateToken()).toString());
     getRedirectStrategy().sendRedirect(request, response, "http://localhost:3000/oauth2/redirect");
   }
 }

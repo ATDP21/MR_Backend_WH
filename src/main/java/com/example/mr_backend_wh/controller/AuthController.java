@@ -4,6 +4,7 @@ import com.example.mr_backend_wh.DTO.AuthenticationResponseDTO;
 import com.example.mr_backend_wh.DTO.LoginDTO;
 import com.example.mr_backend_wh.DTO.RegistroDTO;
 import com.example.mr_backend_wh.security.AuthenticationService;
+import com.example.mr_backend_wh.security.CsrfTokenCookieUtil;
 import com.example.mr_backend_wh.model.Usuario;
 import com.example.mr_backend_wh.service.UsuarioService;
 import lombok.AllArgsConstructor;
@@ -34,7 +35,7 @@ public class AuthController {
   public ResponseEntity<AuthenticationResponseDTO> login(@RequestBody LoginDTO loginDTO, HttpServletResponse response){
     if(authenticationService.verifyPassword(loginDTO)){
       AuthenticationResponseDTO authResp = authenticationService.login(loginDTO);
-      if(authResp != null && authResp.getToken() != null){
+        if(authResp != null && authResp.getToken() != null){
         // Crear cookie JWT (HttpOnly) usando ResponseCookie para incluir SameSite
         // Usar el mismo nombre que el template Google para que TokenAuthenticationFilter lo lea
         ResponseCookie cookie = ResponseCookie.from("X-Auth-Token", authResp.getToken())
@@ -46,6 +47,10 @@ public class AuthController {
                 .build();
 
         response.setHeader("Set-Cookie", cookie.toString());
+
+        // Emitir CSRF token en la misma respuesta para que el frontend pueda hacer POST
+        // sin depender de una recarga previa que dispare un GET.
+        response.addHeader("Set-Cookie", CsrfTokenCookieUtil.buildXsrfCookie(CsrfTokenCookieUtil.generateToken()).toString());
 
         // Devolver solo mensaje; frontend debe usar cookies
         return ResponseEntity.ok(AuthenticationResponseDTO.builder().message("Login success").build());

@@ -8,13 +8,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,11 +22,7 @@ public class CsrfFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(CsrfFilter.class);
 
-    private static final String XSRF_COOKIE = "XSRF-TOKEN";
-    private static final String XSRF_HEADER = "X-XSRF-TOKEN";
     private static final Set<String> SAFE_METHODS = new HashSet<>(Arrays.asList("GET", "HEAD", "OPTIONS"));
-
-    private static final SecureRandom RNG = new SecureRandom();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -42,23 +37,21 @@ public class CsrfFilter extends OncePerRequestFilter {
             return;
         }
 
-        String cookieToken = readCookie(request, XSRF_COOKIE);
+        String cookieToken = readCookie(request, CsrfTokenCookieUtil.XSRF_COOKIE_NAME);
 
         if (SAFE_METHODS.contains(method)) {
             if (cookieToken == null) {
-                String newToken = generateToken();
-                Cookie cookie = new Cookie(XSRF_COOKIE, newToken);
-                cookie.setPath("/");
-                cookie.setHttpOnly(false);
-                response.addCookie(cookie);
+                String newToken = CsrfTokenCookieUtil.generateToken();
+                ResponseCookie cookie = CsrfTokenCookieUtil.buildXsrfCookie(newToken);
+                response.addHeader("Set-Cookie", cookie.toString());
                 response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
-                logger.debug("CsrfFilter: issued {} cookie", XSRF_COOKIE);
+                logger.debug("CsrfFilter: issued {} cookie", CsrfTokenCookieUtil.XSRF_COOKIE_NAME);
             }
             filterChain.doFilter(request, response);
             return;
         }
 
-        String headerToken = request.getHeader(XSRF_HEADER);
+        String headerToken = request.getHeader(CsrfTokenCookieUtil.XSRF_HEADER_NAME);
         if (cookieToken == null || headerToken == null || !cookieToken.equals(headerToken)) {
             logger.warn("CSRF validation failed for request {} {} - headerToken: {}, cookieToken: {}",
                     method, uri, headerToken, cookieToken);
@@ -75,11 +68,5 @@ public class CsrfFilter extends OncePerRequestFilter {
             if (name.equals(c.getName())) return c.getValue();
         }
         return null;
-    }
-
-    private static String generateToken() {
-        byte[] bytes = new byte[32];
-        RNG.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }
