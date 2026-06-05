@@ -67,7 +67,7 @@ public class StripeWebhookController {
 
     /**
      * Endpoint de depuración: procesar manualmente una sesión de Stripe por sessionId.
-     * Útil para development cuando se quiere forzar la ejecución del flujo de creación de pedidos.
+     * Útil para desarrollo cuando se quiere forzar la ejecución del flujo de creación de pedidos.
      * No requiere firma y solo está pensado para pruebas locales.
      */
     @PostMapping("/process-session")
@@ -92,7 +92,6 @@ public class StripeWebhookController {
                     Object ci = map.get("cartItems"); if (ci != null) cartItemsOverride = String.valueOf(ci);
                 }
             } catch (Exception ex) {
-                // body no es JSON, intentar parse simple como antes
                 if (body != null && body.contains("sessionId")) {
                     int idx = body.indexOf("sessionId");
                     int colon = body.indexOf(':', idx);

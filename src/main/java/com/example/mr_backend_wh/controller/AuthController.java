@@ -27,7 +27,6 @@ public class AuthController {
 
   @PostMapping("/registro")
   public Usuario registro(@RequestBody RegistroDTO registroDTO){
-    // Usar el servicio de usuario que acepta RegistroDTO
     return usuarioService.registrarUsuario(registroDTO);
   }
 
@@ -36,8 +35,7 @@ public class AuthController {
     if(authenticationService.verifyPassword(loginDTO)){
       AuthenticationResponseDTO authResp = authenticationService.login(loginDTO);
         if(authResp != null && authResp.getToken() != null){
-        // Crear cookie JWT (HttpOnly) usando ResponseCookie para incluir SameSite
-        // Usar el mismo nombre que el template Google para que TokenAuthenticationFilter lo lea
+
         ResponseCookie cookie = ResponseCookie.from("X-Auth-Token", authResp.getToken())
                 .httpOnly(true)
                 .secure(false) // cambiar a true en producción
@@ -48,11 +46,9 @@ public class AuthController {
 
         response.setHeader("Set-Cookie", cookie.toString());
 
-        // Emitir CSRF token en la misma respuesta para que el frontend pueda hacer POST
-        // sin depender de una recarga previa que dispare un GET.
+
         response.addHeader("Set-Cookie", CsrfTokenCookieUtil.buildXsrfCookie(CsrfTokenCookieUtil.generateToken()).toString());
 
-        // Devolver solo mensaje; frontend debe usar cookies
         return ResponseEntity.ok(AuthenticationResponseDTO.builder().message("Login success").build());
       }
     }
@@ -63,18 +59,15 @@ public class AuthController {
   @PostMapping("/logout")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void logout(HttpServletResponse response) {
-    // Clear JWT cookie (HttpOnly)
     response.addHeader("Set-Cookie", buildClearCookie("X-Auth-Token", PATH, true));
-    // Clear XSRF cookie (readable by JS)
     response.addHeader("Set-Cookie", buildClearCookie("XSRF-TOKEN", PATH, false));
-    // opcional: limpiar cookie de refresh si existe
     response.addHeader("Set-Cookie", buildClearCookie("REFRESH", PATH, true));
   }
 
   private String buildClearCookie(String name, String path, boolean httpOnly) {
     StringBuilder sb = new StringBuilder();
     sb.append(name).append("=").append("; Max-Age=0; Path=").append(path);
-    // En desarrollo no forzamos Secure para que funcione en HTTP local; usar Secure en producción
+    // usar Secure en producción
     sb.append("; SameSite=Lax");
     if (httpOnly) sb.append("; HttpOnly");
     return sb.toString();

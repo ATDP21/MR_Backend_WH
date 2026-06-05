@@ -21,6 +21,7 @@ public class GuitarraService {
         guitarra.setNumserie(guitarraDTO.getNumserie());
         guitarra.setEstado(guitarraDTO.getEstado());
         guitarra.setPrecio(guitarraDTO.getPrecio());
+        guitarra.setNombre(guitarraDTO.getNombre());
         guitarra.setTipomadera(guitarraDTO.getTipoMadera());
         guitarra.setTipo(guitarraDTO.getTipo());
 
