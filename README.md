@@ -2,6 +2,9 @@
 
 API REST para la tienda web de guitarras MR. Este repositorio contiene el backend encargado de gestionar usuarios, catálogo, imágenes, direcciones, pedidos y pagos en línea.
 
+<img width="1895" height="862" alt="image" src="https://github.com/user-attachments/assets/03af803d-7c04-4e46-bbfc-f251f710aa9d" />
+
+
 ## Tecnologías
 
 - Java 17
