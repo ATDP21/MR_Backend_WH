@@ -195,6 +195,3 @@ src/
 - [Implementación de Stripe](STRIPE_IMPLEMENTACION.md)
 - [Webhooks de Stripe](STRIPE_WEBHOOKS.md)
 
-## Licencia
-
-Este repositorio no declara actualmente una licencia.
